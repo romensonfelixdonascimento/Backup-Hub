@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  app-backup:
+    build: .
+    container_name: status-backup
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - TZ=America/Recife
+    env_file:
+      - .env
+    volumes:
+      - /backup/t3/prod/esus/:/app/backups
+      - /etc/localtime:/etc/localtime:ro

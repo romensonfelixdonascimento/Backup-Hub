@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Status Backup - Dashboard Multi-DB</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/index.css">
+</head>
+<body>
+
+<div class="app-container">
+    <div class="app-sidebar">
+        <div class="sidebar-logo" title="PostgreSQL Backup Hub">
+            <img src="../static/assets/icons/logo.png" alt="PostgreSQL Logo">
+        </div>
+        <div class="sidebar-icon" data-bs-toggle="modal" data-bs-target="#registerUserModal" title="Cadastrar Usuário">
+            <img src="../static/assets/icons/add_user.png" alt="Adicionar Usuário" class="sidebar-icon-img">
+        </div>
+        <div class="sidebar-icon" id="themeToggleBtn">🌙</div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <h2 class="m-0">Backup Hub</h2>
+                <span class="text-muted small">
+                    Powerby <a href="https://github.com/romensonfelixdonascimento" target="_blank" style="color: var(--pg-cyan); text-decoration: none; font-weight: 600;">romensonnascimento</a>
+                </span>
+            </div>
+
+            <div class="user-menu-box">
+                <span class="user-name-tag d-inline-flex align-items-center me-2">
+                    <img src="../static/assets/icons/user.png" alt="Usuário" class="me-1" style="width: 18px; height: 18px;">
+                    <span class="text-info">{{ session['username'] }}</span>
+                </span>
+                <button class="btn btn-outline-warning btn-sm px-2 me-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Alterar Senha
+                </button>
+                <a href="/logout" class="btn btn-pg-danger btn-sm px-3" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Sair</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-dismissible fade show
+            {% if category == 'info' %}alert-info bg-info text-dark
+            {% elif category == 'success' %}custom-alert-success
+            {% else %}custom-alert-error{% endif %} p-3 mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close {% if category != 'info' %}btn-close-white{% endif %}" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="dashboard-grid">
+            <div>
+                <div class="panel-card">
+                    <div class="panel-title">Configurar Novo Servidor</div>
+                    <form action="/add-server" method="POST" class="row g-2 align-items-center">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <div class="col-md-2">
+                            <select name="db_type" id="db_type_select" class="form-select" onchange="updateDefaultPort()">
+                                <option value="postgres">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><input type="text" name="host" class="form-control" placeholder="Host" required></div>
+                        <div class="col-md-1"><input type="text" name="port" id="db_port_input" class="form-control" placeholder="Porta" value="5432" required></div>
+                        <div class="col-md-2"><input type="text" name="user" class="form-control" placeholder="Usuário" required></div>
+                        <div class="col-md-2"><input type="password" name="password" class="form-control" placeholder="Senha" required></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-pg-primary w-100">+ Adicionar</button></div>
+                    </form>
+
+                    <div class="table-responsive mt-4">
+                        <table class="table table-sm table-dark table-borderless m-0 align-middle opacity-75">
+                            {% for srv in servers %}
+                            <tr>
+                                <td class="py-2">
+                                    {% if srv.db_type == 'postgres' %}
+                                    <img class="mini-db-icon" src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg" alt="PG">
+                                    <span class="badge badge-db badge-postgres">Postgres</span>
+                                    {% else %}
+                                    <img class="mini-db-icon" src="https://pngimg.com/uploads/mysql/mysql_PNG23.png" alt="MySQL">
+                                    <span class="badge badge-db badge-mysql">MySQL</span>
+                                    {% endif %}
+                                    <span class="ms-2 font-monospace">{{ srv.host }}:{{ srv.port }} ({{ srv.user }})</span>
+                                </td>
+                                <td class="text-end py-2">
+                                    <a href="/remove-server/{{ srv.id }}" class="btn btn-pg-danger btn-sm">Remover</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-title">Bancos de Dados Disponíveis para Backup Manual</div>
+                    <form id="backupForm">
+                        <div class="db-grid-container mb-4">
+                            {% for db in dbs %}
+                            <div class="db-card-item">
+                                <input type="checkbox" name="databases" value="{{ db.id }}" id="chk_{{ loop.index }}" class="db-card-checkbox">
+                                <label for="chk_{{ loop.index }}" class="db-card-label">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="db-icon-indicator">
+                                            {% if db.db_type == 'postgres' %}
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg" alt="PG">
+                                            {% else %}
+                                            <img src="https://pngimg.com/uploads/mysql/mysql_PNG23.png" alt="MySQL" style="width:38px;">
+                                            {% endif %}
+                                        </div>
+                                        <span class="badge badge-db {% if db.db_type == 'postgres' %}badge-postgres{% else %}badge-mysql{% endif %}">
+                                            {{ db.db_type }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <strong class="text-truncate d-block" style="max-width: 180px;">{{ db.db_name }}</strong>
+                                        <div class="text-muted small" style="font-size: 0.72rem;">{{ db.server_label }}</div>
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% if not dbs %}
+                            <p class="text-muted small m-0 py-4 text-center w-100">Nenhum banco de dados integrado. Adicione um servidor válido.</p>
+                            {% endif %}
+                        </div>
+                        <button type="submit" id="btnRunBackup" class="btn btn-pg-run" {% if not dbs %}disabled{% endif %}>Iniciar Dump Manual</button>
+                    </form>
+
+                    <div class="progress-container mt-4" id="progressContainer" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center small text-muted mb-2 font-monospace">
+                            <div>
+                                <span id="progressText">Aguardando...</span>
+                                <span id="progressPctText" class="ms-2 fw-bold">0%</span>
+                            </div>
+                            <button type="button" id="btnCancelBackup" class="btn btn-pg-danger btn-sm px-3" style="display: none; font-size: 0.75rem;">🛑 Parar</button>
+                        </div>
+                        <div class="progress">
+                            <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel-card" style="max-height: 85vh; overflow-y: auto;">
+                    <div class="panel-title">Backups em Storage (Últimos 3 dias)</div>
+                    <div class="d-flex flex-column gap-2">
+                        {% for b in backups %}
+                        <div class="backup-list-item">
+                            <div class="backup-info" style="max-width: 220px;">
+                                <h6 class="m-0 text-truncate">
+                                    {% if b.db_type == 'postgres' %}
+                                    <img class="mini-db-icon" src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg" alt="PG" style="width:14px;">
+                                    {% else %}
+                                    <img class="mini-db-icon" src="https://pngimg.com/uploads/mysql/mysql_PNG23.png" alt="MySQL" style="width:16px;">
+                                    {% endif %}
+                                    {{ b.db }}
+                                </h6>
+                                <small class="d-block text-muted text-truncate" style="font-size: 0.75rem;">{{ b.name }}</small>
+                                <small class="text-muted" style="font-size: 0.72rem;">{{ b.date }} • {{ b.size }}</small>
+                            </div>
+                            <div>
+                                <a href="/download/{{ b.path }}" class="btn btn-sm btn-outline-info" style="font-size: 0.72rem; border-radius: 8px;">Baixar</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if not backups %}
+                        <p class="text-muted small text-center py-4">Nenhum arquivo em disco.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="background-color: var(--bg-surface); border: 1px solid rgb(200 0 15); border-radius: 16px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger fw-bold">Falha no Lote</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-black bg-opacity-20 font-monospace">
+                <div id="errorMessagesList" class="text-danger small" style="white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-pg-primary" onclick="window.location.reload()">Recarregar Dashboard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="registerUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: var(--bg-surface); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold d-flex align-items-center">
+                    <img src="../static/assets/icons/add_user.png" alt="Ícone Usuário" class="me-2" style="width: 50px; height: 50px;">
+                    Cadastrar Novo Usuário
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/register-user" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Nome de Usuário</label>
+                        <input type="text" name="new_username" class="form-control" placeholder="Ex: admin_secundario" required autocomplete="off">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Senha</label>
+                        <input type="password" name="new_password" class="form-control" placeholder="Digite a senha" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-pg-primary">Salvar Usuário</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Alterar a Própria Senha -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: var(--bg-surface); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold d-flex align-items-center">
+                    <span class="me-2">🔒</span> Alterar Minha Senha
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/change-password" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Senha Atual</label>
+                        <input type="password" name="current_password" class="form-control" placeholder="Digite sua senha atual" required>
+                    </div>
+                    <hr class="opacity-10">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Nova Senha</label>
+                        <input type="password" name="new_password" class="form-control" placeholder="Digite a nova senha" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Confirmar Nova Senha</label>
+                        <input type="password" name="confirm_password" class="form-control" placeholder="Repita a nova senha" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-pg-primary">Atualizar Senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../static/js/index.js"></script>
+</body>
+</html>

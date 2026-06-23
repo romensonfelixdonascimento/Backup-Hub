@@ -1,0 +1,23 @@
+# Ambientes Virtuais
+venv/
+env/
+.venv/
+
+# Variáveis de ambiente (NUNCA comitar o .env)
+.env
+
+# Logs
+backup.log
+*.log
+
+# Diretório de backups (não queremos dumps pesados no Git)
+backups/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDEs
+.idea/
+.vscode/

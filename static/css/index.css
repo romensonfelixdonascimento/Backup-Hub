@@ -1,0 +1,127 @@
+:root {
+    --bg-main: #0b1219;
+    --bg-sidebar: #080d12;
+    --bg-surface: #14202c;
+    --bg-surface-hover: #1b2b3b;
+    --pg-blue: #336791;
+    --pg-cyan: #308bb9;
+    --mysql-orange: #f29111;
+    --mysql-blue: #00758f;
+    --neon-glow: #00e5ff;
+    --text-main: #f1f5f9;
+    --text-muted: #64748b;
+    --flat-danger: #ffffff;
+}
+
+[data-bs-theme="light"] {
+    --bg-main: #f4f7f9;
+    --bg-sidebar: #e2e8f0;
+    --bg-surface: #ffffff;
+    --bg-surface-hover: #f8fafc;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --neon-glow: #308bb9;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+.app-container { display: flex; min-height: 100vh; }
+
+.app-sidebar {
+    width: 75px;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    gap: 25px;
+}
+.sidebar-logo img {
+    width: 45px;
+    height: auto;
+    filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.4));
+}
+
+.sidebar-icon {
+    width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); border-radius: 12px; cursor: pointer; transition: all 0.2s ease;
+}
+.sidebar-icon:hover { color: var(--text-main); background-color: var(--bg-surface); }
+
+.sidebar-icon-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+.sidebar-icon:hover .sidebar-icon-img {
+    opacity: 1;
+}
+
+.main-content { flex: 1; display: flex; flex-direction: column; padding: 25px; overflow-y: auto; }
+.content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+
+.dashboard-grid { display: grid; grid-template-columns: 1fr 360px; gap: 25px; }
+@media (max-width: 1200px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+.panel-card { background-color: var(--bg-surface); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 20px; margin-bottom: 25px; }
+.panel-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; margin-bottom: 20px; }
+
+.form-control, .form-select { background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-main); border-radius: 10px; padding: 10px 15px; }
+.form-control:focus, .form-select:focus { background-color: rgba(0, 0, 0, 0.3); border-color: var(--pg-cyan); color: var(--text-main); box-shadow: none; }
+
+.btn-pg-primary { background-color: var(--pg-cyan); border: none; color: white; font-weight: 600; border-radius: 10px; padding: 10px 20px; }
+.btn-pg-primary:hover { background-color: var(--pg-blue); }
+.btn-pg-danger { background-color: rgb(200 0 15); border: none; color: white; font-weight: 600; border-radius: 10px; padding: 5px 15px; }
+
+.btn-pg-run {
+    background: linear-gradient(135deg, var(--pg-blue), var(--mysql-blue)); border: none; color: white;
+    font-weight: bold; border-radius: 12px; width: 100%; padding: 15px; text-transform: uppercase;
+}
+
+.db-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+.db-card-item { position: relative; }
+.db-card-checkbox { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
+.db-card-label {
+    display: flex; flex-direction: column; justify-content: space-between; background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 20px; min-height: 130px; width: 100%;
+}
+.db-card-item:hover .db-card-label { background-color: var(--bg-surface-hover); border-color: rgba(255, 255, 255, 0.2); }
+
+.db-icon-indicator img { width: 32px; height: auto; filter: grayscale(100%) opacity(0.4); transition: all 0.3s; }
+.db-card-checkbox:checked + .db-card-label { border-color: var(--neon-glow); background-color: rgba(0, 229, 255, 0.04); }
+.db-card-checkbox:checked + .db-card-label .db-icon-indicator img { filter: grayscale(0%) opacity(1); }
+
+.badge-db { font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; font-weight: bold; text-transform: uppercase; }
+.badge-postgres { background-color: rgba(48, 139, 185, 0.2); color: #7cb3d6; border: 1px solid rgba(48, 139, 185, 0.4); }
+.badge-mysql { background-color: rgba(242, 145, 17, 0.2); color: #f5b056; border: 1px solid rgba(242, 145, 17, 0.4); }
+
+.backup-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.progress { background-color: rgba(0, 0, 0, 0.3); height: 12px; border-radius: 6px; overflow: hidden; }
+.progress-bar { background-color: var(--neon-glow); }
+
+.custom-alert-error { background-color: rgb(200 0 15) !important; color: white !important; border-radius: 12px; }
+.custom-alert-success { background-color: var(--pg-blue) !important; color: white !important; border-radius: 12px; }
+
+.mini-db-icon { width: 18px; height: auto; margin-right: 6px; vertical-align: middle; }
+
+.user-menu-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: rgba(255, 255, 255, 0.02);
+    padding: 6px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.user-name-tag {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
