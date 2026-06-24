@@ -100,7 +100,10 @@
                 </div>
 
                 <div class="panel-card">
-                    <div class="panel-title">Bancos de Dados Disponíveis para Backup Manual</div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="panel-title mb-0">Bancos de Dados Disponíveis para Backup Manual</div>
+                        <input type="text" id="searchDbInput" class="form-control form-control-sm" placeholder="Pesquisar banco..." style="max-width: 220px;">
+                    </div>
                     <form id="backupForm">
                         <div class="db-grid-container mb-4">
                             {% for db in dbs %}
@@ -119,9 +122,13 @@
                                             {{ db.db_type }}
                                         </span>
                                     </div>
-                                    <div>
-                                        <strong class="text-truncate d-block" style="max-width: 180px;">{{ db.db_name }}</strong>
-                                        <div class="text-muted small" style="font-size: 0.72rem;">{{ db.server_label }}</div>
+                                    <div style="min-width: 0;">
+                                        <strong class="text-truncate d-block" style="width: 100%;" title="{{ db.db_name }}">
+                                            {{ db.db_name }}
+                                        </strong>
+                                        <div class="text-muted small text-truncate d-block" style="font-size: 0.72rem; width: 100%;" title="{{ db.server_label }}">
+                                            {{ db.server_label }}
+                                        </div>
                                     </div>
                                 </label>
                             </div>
@@ -150,7 +157,10 @@
 
             <div>
                 <div class="panel-card" style="max-height: 85vh; overflow-y: auto;">
-                    <div class="panel-title">Backups em Storage (Últimos 3 dias)</div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="panel-title mb-0">Backups em Storage (Últimos 3 dias)</div>
+                        <input type="text" id="searchBackupInput" class="form-control form-control-sm" placeholder="Pesquisar arquivo..." style="max-width: 220px;">
+                    </div>
                     <div class="d-flex flex-column gap-2">
                         {% for b in backups %}
                         <div class="backup-list-item">
@@ -231,7 +241,6 @@
     </div>
 </div>
 
-<!-- Modal Alterar a Própria Senha -->
 <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background-color: var(--bg-surface); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;">

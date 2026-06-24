@@ -147,12 +147,10 @@ def get_db_connection(target_db=None):
 
 
 def init_db():
-    # Agora delega para as queries isoladas passando a função de conexão como callback
     queries.init_database_structure(get_db_connection, DB_CONFIG['database'])
 
 
 def load_servers():
-    # Centralizado no módulo queries
     return queries.get_all_backup_servers(get_db_connection, decrypt_password)
 
 
@@ -171,8 +169,6 @@ def add_server_to_db(srv):
             pass
 
     encrypted_pw = encrypt_password(srv['password'])
-
-    # Executa a query isolada
     queries.insert_backup_server(
         get_db_connection,
         srv['host'], srv['port'], srv['user'], encrypted_pw, srv['db_type']
@@ -195,13 +191,39 @@ def get_databases_from_server(srv):
     result = []
     try:
         if srv['db_type'] == 'postgres':
-            with psycopg2.connect(
-                    host=srv['host'], port=srv['port'], user=srv['user'],
-                    password=srv['password'], database="postgres", connect_timeout=3
-            ) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false AND datname NOT IN ('postgres','browser_db');")
-                    result = [row[0] for row in cur.fetchall()]
+            # 1. TENTA TRATAR COMO PGBOUNCER PRIMEIRO (Banco virtual 'pgbouncer')
+            try:
+                # Conexão sem o 'with' para evitar que inicie uma transação e envie 'BEGIN'
+                conn = psycopg2.connect(
+                        host=srv['host'], port=srv['port'], user=srv['user'],
+                        password=srv['password'], database="pgbouncer", connect_timeout=3
+                )
+                conn.autocommit = True  # Isto impede o envio do comando BEGIN
+
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("SHOW DATABASES;")
+                        raw_bouncer_dbs = cur.fetchall()
+                        result = [row[0] for row in raw_bouncer_dbs if row[0] not in ('postgres', 'pgbouncer')]
+                        logging.info(f"Bancos descobertos via PgBouncer em {srv['host']}:{srv['port']}")
+                finally:
+                    conn.close() # Garante o fecho da conexão corretamente
+
+            except Exception as bouncer_err:
+                logging.info(f"Não foi possível listar via PgBouncer em {srv['host']} ({bouncer_err}). Tentando catálogo nativo...")
+                result = []
+
+            # 2. SE NÃO RETORNOU NADA, FAZ O FALLBACK PARA O POSTGRES NATIVO
+            if not result:
+                with psycopg2.connect(
+                        host=srv['host'], port=srv['port'], user=srv['user'],
+                        password=srv['password'], database="postgres", connect_timeout=3
+                ) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT datname FROM pg_database WHERE datistemplate = false AND datname NOT IN ('postgres','browser_db');")
+                        result = [row[0] for row in cur.fetchall()]
+                        logging.info(f"Bancos descobertos via catálogo nativo em {srv['host']}:{srv['port']}")
+
         elif srv['db_type'] == 'mysql':
             with mysql.connector.connect(
                     host=srv['host'], port=int(srv['port']), user=srv['user'],
@@ -297,7 +319,6 @@ def login():
         password = request.form.get('password', '')
 
         try:
-            # Consome a busca por username isolada
             user = queries.get_user_by_username(get_db_connection, username)
 
             if user and check_password_hash(user['password_hash'], password):
@@ -456,7 +477,6 @@ def api_backup_single():
         if not is_valid_db_name(db):
             return jsonify({"status": "error", "message": "Nome de banco de dados inválido ou suspeito."}), 400
 
-        # Busca pelo ID usando o módulo queries separado
         srv = queries.get_backup_server_by_id(get_db_connection, server_id)
 
         if not srv:

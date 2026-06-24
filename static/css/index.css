@@ -86,12 +86,25 @@ body {
     font-weight: bold; border-radius: 12px; width: 100%; padding: 15px; text-transform: uppercase;
 }
 
-.db-grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+/* Área de Grid Customizada com Rolagem */
+.db-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    max-height: 52vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+}
+
 .db-card-item { position: relative; }
 .db-card-checkbox { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
+
+/* Proteção interna do Card para evitar transbordo */
 .db-card-label {
     display: flex; flex-direction: column; justify-content: space-between; background-color: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 20px; min-height: 130px; width: 100%;
+    overflow: hidden;
 }
 .db-card-item:hover .db-card-label { background-color: var(--bg-surface-hover); border-color: rgba(255, 255, 255, 0.2); }
 
@@ -124,4 +137,20 @@ body {
 .user-name-tag {
     font-size: 0.9rem;
     font-weight: 600;
+}
+
+/* Customização da Barra de Rolagem Integrada ao Tema */
+.db-grid-container::-webkit-scrollbar {
+    width: 6px;
+}
+.db-grid-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+.db-grid-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.db-grid-container::-webkit-scrollbar-thumb:hover {
+    background: var(--pg-cyan);
 }

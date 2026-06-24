@@ -1,4 +1,3 @@
-// Captura o CSRF Token da Meta Tag para usar nas requisições fetch
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 function updateDefaultPort() {
@@ -188,4 +187,44 @@ function finalizarProcessoFila() {
     } else {
         setTimeout(() => { window.location.reload(); }, 1000);
     }
+}
+
+// ==========================================
+// Filtro em tempo real - Bancos de Dados
+// ==========================================
+const searchDbInput = document.getElementById('searchDbInput');
+if (searchDbInput) {
+    searchDbInput.addEventListener('input', function() {
+        const term = this.value.toLowerCase();
+        const dbItems = document.querySelectorAll('.db-card-item');
+
+        dbItems.forEach(item => {
+            const textContent = item.innerText.toLowerCase();
+            if (textContent.includes(term)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+}
+
+// ==========================================
+// Filtro em tempo real - Backups em Storage
+// ==========================================
+const searchBackupInput = document.getElementById('searchBackupInput');
+if (searchBackupInput) {
+    searchBackupInput.addEventListener('input', function() {
+        const term = this.value.toLowerCase();
+        const backupItems = document.querySelectorAll('.backup-list-item');
+
+        backupItems.forEach(item => {
+            const textContent = item.innerText.toLowerCase();
+            if (textContent.includes(term)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
 }

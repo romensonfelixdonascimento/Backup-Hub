@@ -1,5 +1,6 @@
 # queries.py
 import logging
+import os
 from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash
@@ -58,12 +59,19 @@ def init_database_structure(get_db_connection, db_name):
 
                 # Usuário Admin padrão estrito
                 default_user = "admin"
-                temp_password = secrets.token_hex(6)
+
+                # Tenta pegar a senha do .env; se não existir, gera uma aleatória
+                temp_password = os.getenv("ADMIN_DEFAULT_PASSWORD") or secrets.token_hex(6)
                 default_password_hash = generate_password_hash(temp_password)
+
                 cur.execute("INSERT INTO users (username, password_hash) VALUES (%s, %s);", (default_user, default_password_hash))
                 conn.commit()
-                logging.warning(f"⚠️ Usuário padrão criado! Login: admin | Senha Temporária: {temp_password}")
-                logging.warning("Por favor, altere esta senha imediatamente após o primeiro login.")
+
+                if os.getenv("ADMIN_DEFAULT_PASSWORD"):
+                    logging.info("✅ Usuário padrão criado! Login: admin | Senha: [Definida via .env]")
+                else:
+                    logging.warning(f"⚠️ Usuário padrão criado! Login: admin | Senha Temporária: {temp_password}")
+                    logging.warning("Por favor, altere esta senha imediatamente após o primeiro login.")
 
     except Exception as e:
         logging.error(f"Erro crítico ao rodar migrações/init_db: {e}")
